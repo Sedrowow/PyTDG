@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Shop System & Casino Games (European Roulette, 3-Reel Slots, 5x5 Spinning Wheel, ASCII Pixel Art Configurator).
+Shop System & Casino Games (Mystery Chests, 3-Reel Slots, 1x5 Horizontal Wheel of Fortune, 5x5 ASCII Pixel Art Configurator & ASCII Victory Banners).
 """
 
 import time
@@ -10,11 +10,40 @@ from utils import Colors, GameContext, p_line, read_key, clear_full_screen, DEFA
 from status import StatusManager
 from item import ItemManager
 
+RARE_BANNER = [
+    "  ____     _     ____  _____   _   _ _____ _   _ _ ",
+    " |  _ \\   / \\   |  _ \\| ____| | | | |_   _| \\ | | |",
+    " | |_) | / _ \\  | |_) |  _|   | | | | | | |  \\| | |",
+    " |  _ < / ___ \\ |  _ <| |___  | |_| | | | | |\\  |_|",
+    " |_| \\_/_/   \\_\\|_| \\_\\_____|  \\___/  |_| |_| \\_(_)"
+]
+
+JACKPOT_BANNER = [
+    "  _   _ _____  ____ _  _______   ___ _____ _ ",
+    " | | / \\|_   _|/ ___| |/ /  _  \\ / _ \\_   _| |",
+    " | |/ _ \\ | | | |   | ' /| |_) |/ /_\\ \\| | | |",
+    " | / ___ \\| | | |___| . \\|  __/|  _  || | |_|",
+    " |/_/   \\_\\_|  \\____|_|\\_\\_|   |_| |_||_| (_)"
+]
+
 class ShopCasinoManager:
     def __init__(self, ctx: GameContext, status_mgr: StatusManager, item_mgr: ItemManager):
         self.ctx = ctx
         self.status_mgr = status_mgr
         self.item_mgr = item_mgr
+
+    def show_victory_banner(self, tier: str):
+        banner = JACKPOT_BANNER if tier == "Jackpot" else RARE_BANNER
+        colors = [Colors.GOLD, Colors.YELLOW, Colors.CYAN, Colors.MAGENTA, Colors.GREEN]
+
+        for step in range(6):
+            c_code = colors[step % len(colors)]
+            self.status_mgr.display_status_header()
+            p_line()
+            for line in banner:
+                p_line(f"   {c_code}{Colors.BOLD}{line}{Colors.RESET}")
+            p_line()
+            time.sleep(0.1)
 
     def shop_menu(self):
         clear_full_screen()
@@ -71,8 +100,8 @@ class ShopCasinoManager:
                 if gtype == "slotmachine":
                     self.run_slot_machine(item)
                     clear_full_screen()
-                elif gtype == "roulette":
-                    self.run_roulette(item)
+                elif gtype == "chests":
+                    self.run_mystery_chests(item)
                     clear_full_screen()
                 elif gtype == "wheel":
                     self.run_spinning_wheel(item)
@@ -106,8 +135,8 @@ class ShopCasinoManager:
             footer_items = [
                 {"id": -1, "name": "[+ Add Existing Item to Shop...]", "is_add_item_slot": True},
                 {"id": -3, "name": "[+ Create Slot Machine...]", "is_create_slot_machine": True},
-                {"id": -4, "name": "[+ Create Roulette Table...]", "is_create_roulette": True},
-                {"id": -5, "name": "[+ Create Spinning Wheel (5x5)...]", "is_create_wheel": True}
+                {"id": -4, "name": "[+ Create Mystery Chests...]", "is_create_chests": True},
+                {"id": -5, "name": "[+ Create Spinning Wheel (1x5)...]", "is_create_wheel": True}
             ]
             items = header_items + shop + footer_items
 
@@ -125,7 +154,7 @@ class ShopCasinoManager:
                     cursor = "► " if idx == sel else "  "
                     if item.get("is_registry_slot"):
                         line = f"{cursor}{Colors.PURPLE}{item['name']}{Colors.RESET}"
-                    elif item.get("is_add_item_slot") or item.get("is_create_slot_machine") or item.get("is_create_roulette") or item.get("is_create_wheel"):
+                    elif item.get("is_add_item_slot") or item.get("is_create_slot_machine") or item.get("is_create_chests") or item.get("is_create_wheel"):
                         line = f"{cursor}{Colors.GREEN}{item['name']}{Colors.RESET}"
                     else:
                         color_code = Colors.parse_color(item.get("color", "WHITE"))
@@ -201,33 +230,34 @@ class ShopCasinoManager:
                             "type": "slotmachine", "cost": float(res["price"]), "symbols": self.ctx.get_default_5x5_symbols()
                         })
                         self.ctx.save_data()
-                elif selected_item.get("is_create_roulette"):
+                elif selected_item.get("is_create_chests"):
                     fields = [
-                        {"key": "name", "label": "Roulette Table Name", "type": "text", "val": "European Roulette"},
-                        {"key": "color", "label": "Color (Name/#Hex)", "type": "text", "val": "GREEN"},
-                        {"key": "price", "label": "Entry / Base Bet ($)", "type": "number", "val": 10.0},
-                        {"key": "description", "label": "Description", "type": "text", "val": "Bet on Red, Black, Even, Odd, or Numbers!"},
-                        {"key": "SAVE", "label": "SAVE ROULETTE TABLE", "type": "button"},
+                        {"key": "name", "label": "Mystery Chests Name", "type": "text", "val": "Lucky Mystery Chests"},
+                        {"key": "color", "label": "Color (Name/#Hex)", "type": "text", "val": "PURPLE"},
+                        {"key": "price", "label": "Play Cost ($)", "type": "number", "val": 10.0},
+                        {"key": "description", "label": "Description", "type": "text", "val": "Pick 1 of 3 chests to reveal instant wins or traps!"},
+                        {"key": "SAVE", "label": "SAVE MYSTERY CHESTS", "type": "button"},
                         {"key": "CANCEL", "label": "CANCEL", "type": "button"}
                     ]
-                    res = self.ctx.run_menu_form("Create Roulette Table", fields, self.status_mgr.display_status_header)
+                    res = self.ctx.run_menu_form("Create Mystery Chests", fields, self.status_mgr.display_status_header)
                     if res:
                         new_id = max([i["id"] for i in shop], default=0) + 1
                         self.ctx.data["shop"].append({
                             "id": new_id, "name": str(res["name"]), "color": str(res["color"]),
-                            "price": float(res["price"]), "description": str(res["description"]), "type": "roulette"
+                            "price": float(res["price"]), "description": str(res["description"]),
+                            "type": "chests", "symbols": self.ctx.get_default_5x5_symbols()
                         })
                         self.ctx.save_data()
                 elif selected_item.get("is_create_wheel"):
                     fields = [
-                        {"key": "name", "label": "Spinning Wheel Name", "type": "text", "val": "5x5 Wheel of Fortune"},
+                        {"key": "name", "label": "Spinning Wheel Name", "type": "text", "val": "1x5 Wheel of Fortune"},
                         {"key": "color", "label": "Color (Name/#Hex)", "type": "text", "val": "GOLD"},
                         {"key": "price", "label": "Spin Cost ($)", "type": "number", "val": 15.0},
-                        {"key": "description", "label": "Description", "type": "text", "val": "Spin the 5x5 symbol wheel for rewards!"},
+                        {"key": "description", "label": "Description", "type": "text", "val": "Spin the 1x5 horizontal symbol reel for rewards!"},
                         {"key": "SAVE", "label": "SAVE SPINNING WHEEL", "type": "button"},
                         {"key": "CANCEL", "label": "CANCEL", "type": "button"}
                     ]
-                    res = self.ctx.run_menu_form("Create 5x5 Spinning Wheel", fields, self.status_mgr.display_status_header)
+                    res = self.ctx.run_menu_form("Create 1x5 Spinning Wheel", fields, self.status_mgr.display_status_header)
                     if res:
                         new_id = max([i["id"] for i in shop], default=0) + 1
                         self.ctx.data["shop"].append({
@@ -239,8 +269,8 @@ class ShopCasinoManager:
                 else:
                     item = selected_item
                     stype = item.get("type")
-                    if stype in ("slotmachine", "wheel"):
-                        opts = ["1. Edit Game Details", "2. Manage 5x5 Symbols, Odds & Pixel Art", "3. Delete Game", "0. Cancel"]
+                    if stype in ("slotmachine", "wheel", "chests"):
+                        opts = ["1. Edit Game Details", "2. Manage Symbols, Odds & Pixel Art", "3. Delete Game", "0. Cancel"]
                         choice = self.ctx.run_action_menu(f"Casino Game: {item['name']}", opts, self.status_mgr.display_status_header)
                         if choice == 0:
                             fields = [
@@ -262,28 +292,6 @@ class ShopCasinoManager:
                         elif choice == 1:
                             self.manage_5x5_symbols_and_odds(item)
                         elif choice == 2:
-                            self.ctx.data["shop"] = [x for x in self.ctx.data["shop"] if x["id"] != item["id"]]
-                            self.ctx.save_data()
-                    elif stype == "roulette":
-                        opts = ["1. Edit Roulette Details", "2. Delete Table", "0. Cancel"]
-                        choice = self.ctx.run_action_menu(f"Roulette Table: {item['name']}", opts, self.status_mgr.display_status_header)
-                        if choice == 0:
-                            fields = [
-                                {"key": "name", "label": "Table Name", "type": "text", "val": item["name"]},
-                                {"key": "color", "label": "Color (Name/#Hex)", "type": "text", "val": item.get("color", "GREEN")},
-                                {"key": "price", "label": "Base Bet ($)", "type": "number", "val": item.get("price", 10.0)},
-                                {"key": "description", "label": "Description", "type": "text", "val": item.get("description", "")},
-                                {"key": "SAVE", "label": "SAVE TABLE", "type": "button"},
-                                {"key": "CANCEL", "label": "CANCEL", "type": "button"}
-                            ]
-                            res = self.ctx.run_menu_form(f"Edit Table: {item['name']}", fields, self.status_mgr.display_status_header)
-                            if res:
-                                item["name"] = str(res["name"])
-                                item["color"] = str(res["color"])
-                                item["price"] = float(res["price"])
-                                item["description"] = str(res["description"])
-                                self.ctx.save_data()
-                        elif choice == 1:
                             self.ctx.data["shop"] = [x for x in self.ctx.data["shop"] if x["id"] != item["id"]]
                             self.ctx.save_data()
                     else:
@@ -310,77 +318,51 @@ class ShopCasinoManager:
                 break
         clear_full_screen()
 
-    def run_roulette(self, item: Dict[str, Any]):
+    def run_mystery_chests(self, item: Dict[str, Any]):
         prof = self.ctx.get_profile()
-        bet_options = ["1. Red (1:1)", "2. Black (1:1)", "3. Even (1:1)", "4. Odd (1:1)", "5. Single Number 0-36 (35:1)", "0. Cancel"]
-        choice = self.ctx.run_action_menu("European Roulette - Place Your Bet", bet_options, self.status_mgr.display_status_header)
-        if choice is None or choice == 5:
+        cost = float(item.get("price", 10.0))
+        symbols = item.get("symbols") or self.ctx.get_default_5x5_symbols()
+
+        if prof["money"] < cost:
+            print(f"\n{Colors.RED}Not enough money to play! (Cost: ${cost:.2f}){Colors.RESET}")
+            time.sleep(1.2)
             return
 
-        bet_type = ["red", "black", "even", "odd", "number"][choice]
-        target_num = -1
-        if bet_type == "number":
-            num_str = self.ctx.prompt_input("Enter Target Number (0-36): ")
-            try:
-                target_num = int(num_str)
-                if not (0 <= target_num <= 36):
-                    print(f"{Colors.RED}Invalid number!{Colors.RESET}")
-                    time.sleep(1.0)
-                    return
-            except ValueError:
-                return
-
-        bet_str = self.ctx.prompt_input("Enter Bet Amount ($): ")
-        try:
-            bet_amt = float(bet_str)
-            if bet_amt <= 0 or bet_amt > prof["money"]:
-                print(f"{Colors.RED}Invalid bet amount!{Colors.RESET}")
-                time.sleep(1.0)
-                return
-        except ValueError:
+        chest_opts = ["1. Mystery Chest #1", "2. Mystery Chest #2", "3. Mystery Chest #3", "0. Cancel"]
+        chosen_i = self.ctx.run_action_menu("Pick 1 of 3 Mystery Chests", chest_opts, self.status_mgr.display_status_header)
+        if chosen_i is None or chosen_i == 3:
             return
 
         old_money = prof["money"]
-        self.status_mgr.animate_money_change(old_money, old_money - bet_amt)
+        self.status_mgr.animate_money_change(old_money, old_money - cost)
 
-        red_numbers = {1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36}
-        winning_num = random.randint(0, 36)
+        chest_outcomes = [self.pick_weighted_symbol(symbols) for _ in range(3)]
 
-        steps = 25
-        for s in range(steps):
-            display_num = random.randint(0, 36) if s < steps - 1 else winning_num
-            col = Colors.GREEN if display_num == 0 else (Colors.RED if display_num in red_numbers else Colors.WHITE)
+        for step in range(8):
             self.status_mgr.display_status_header()
-            p_line(f"{Colors.BOLD}{Colors.GOLD}--- EUROPEAN ROULETTE WHEEL ---{Colors.RESET}")
+            p_line(f"{Colors.BOLD}{Colors.PURPLE}--- MYSTERY CHESTS: {item['name'].upper()} ---{Colors.RESET}")
             p_line()
-            p_line(f"           [  {col}{Colors.BOLD}{display_num:^2}{Colors.RESET}  ]           ")
+
+            cards_line = ""
+            for i in range(3):
+                pointer = " ▼ " if i == chosen_i else "   "
+                cards_line += f"  {Colors.YELLOW}{pointer}{Colors.RESET}  "
+            p_line(cards_line)
+
+            for line_idx in range(5):
+                row_str = " | ".join([
+                    f"{Colors.parse_color(sym.get('color', 'WHITE'))}{sym.get('art', DEFAULT_5x5_ARTS['COIN'])[line_idx]}{Colors.RESET}" if step >= 4 else f"{Colors.GREY}[ ? ? ? ]{Colors.RESET}"
+                    for sym in chest_outcomes
+                ])
+                p_line(f"   | {row_str} |")
+
             p_line()
-            time.sleep(0.04 + (s * 0.008))
+            time.sleep(0.08)
 
-        is_red = winning_num in red_numbers
-        is_black = winning_num != 0 and not is_red
-        is_even = winning_num != 0 and winning_num % 2 == 0
-        is_odd = winning_num % 2 != 0
-
-        won = False
-        payout = 0.0
-
-        if bet_type == "red" and is_red: won = True; payout = bet_amt * 2.0
-        elif bet_type == "black" and is_black: won = True; payout = bet_amt * 2.0
-        elif bet_type == "even" and is_even: won = True; payout = bet_amt * 2.0
-        elif bet_type == "odd" and is_odd: won = True; payout = bet_amt * 2.0
-        elif bet_type == "number" and winning_num == target_num: won = True; payout = bet_amt * 36.0
-
-        num_color_str = "GREEN" if winning_num == 0 else ("RED" if is_red else "BLACK")
+        winning_sym = chest_outcomes[chosen_i]
         p_line("-" * 70)
-        p_line(f"Winning Ball Landed On: {Colors.parse_color(num_color_str)}{Colors.BOLD}{winning_num} ({num_color_str}){Colors.RESET}")
-
-        if won:
-            p_line(f"{Colors.GREEN}{Colors.BOLD}🎉 YOU WON! Payout: +${payout:.2f}{Colors.RESET}")
-            self.status_mgr.animate_money_change(prof["money"], prof["money"] + payout)
-        else:
-            p_line(f"{Colors.RED}House Wins. Better luck next spin!{Colors.RESET}")
-
+        p_line(f"{Colors.BOLD}YOU REVEALED CHEST #{chosen_i + 1}: {winning_sym['name'].upper()}!{Colors.RESET}")
+        self.apply_symbol_outcome(winning_sym, multiplier=1.0)
         self.ctx.prompt_input("\nPress Enter to continue...")
 
     def run_spinning_wheel(self, item: Dict[str, Any]):
@@ -396,32 +378,33 @@ class ShopCasinoManager:
         old_money = prof["money"]
         self.status_mgr.animate_money_change(old_money, old_money - cost)
 
-        weights = [max(1, int(s.get("weight", 10))) for s in symbols]
-        winning_sym = random.choices(symbols, weights=weights, k=1)[0]
+        winning_sym = self.pick_weighted_symbol(symbols)
+        total_steps = 20
 
-        total_steps = 18
         for step in range(total_steps):
-            cur_sym = winning_sym if step == total_steps - 1 else random.choice(symbols)
+            if step == total_steps - 1:
+                reel = [self.pick_weighted_symbol(symbols), self.pick_weighted_symbol(symbols), winning_sym, self.pick_weighted_symbol(symbols), self.pick_weighted_symbol(symbols)]
+            else:
+                reel = [self.pick_weighted_symbol(symbols) for _ in range(5)]
+
             self.status_mgr.display_status_header()
-            p_line(f"{Colors.BOLD}{Colors.GOLD}--- 5x5 WHEEL OF FORTUNE: {item['name'].upper()} ---{Colors.RESET}")
+            p_line(f"{Colors.BOLD}{Colors.GOLD}--- 1x5 WHEEL OF FORTUNE: {item['name'].upper()} ---{Colors.RESET}")
             p_line()
+            p_line("                        ▼ POINTER (CENTER) ▼")
 
-            art_lines = cur_sym.get("art", DEFAULT_5x5_ARTS["STAR"])
-            c_code = Colors.parse_color(cur_sym.get("color", "WHITE"))
-            
-            p_line("        ▼ POINTER ▼        ")
-            p_line("      ┌───────────┐      ")
-            for r in range(5):
-                line_str = "".join([f"{ch} " for ch in art_lines[r]])
-                p_line(f"      │ {c_code}{line_str}{Colors.RESET}│      ")
-            p_line("      └───────────┘      ")
-            p_line(f"       [{c_code}{cur_sym['name']:^9}{Colors.RESET}]")
+            for line_idx in range(5):
+                row_str = " | ".join([
+                    f"{Colors.parse_color(s.get('color', 'WHITE'))}{s.get('art', DEFAULT_5x5_ARTS['STAR'])[line_idx]}{Colors.RESET}"
+                    for s in reel
+                ])
+                p_line(f"   | {row_str} |")
+
+            p_line("                        ▲ POINTER (CENTER) ▲")
             p_line()
-
-            time.sleep(0.05 + (step * 0.01))
+            time.sleep(0.04 + (step * 0.008))
 
         p_line("-" * 70)
-        p_line(f"{Colors.GREEN}{Colors.BOLD}WHEEL LANDED ON: {winning_sym['name'].upper()}!{Colors.RESET}")
+        p_line(f"{Colors.GREEN}{Colors.BOLD}CENTER POINTER LANDED ON: {winning_sym['name'].upper()}!{Colors.RESET}")
         self.apply_symbol_outcome(winning_sym, multiplier=1.0)
         self.ctx.prompt_input("\nPress Enter to continue...")
 
@@ -497,6 +480,11 @@ class ShopCasinoManager:
 
     def apply_symbol_outcome(self, sym: Dict[str, Any], multiplier: float = 1.0):
         prof = self.ctx.get_profile()
+        tier = str(sym.get("tier", "Normal"))
+
+        if tier in ("Rare", "Jackpot"):
+            self.show_victory_banner(tier)
+
         rtype = sym.get("reward_type", "Money Gain")
         val = float(sym.get("val", 10.0)) * multiplier
 
@@ -624,12 +612,14 @@ class ShopCasinoManager:
         while True:
             prof = self.ctx.get_profile()
             skill_options = ["None"] + list(prof["skills"].keys())
+            item_options = self.ctx.get_registered_item_names() or ["Health Potion"]
+
             total_weight = sum([int(s.get("weight", 10)) for s in symbols])
             now_sec = time.time()
 
             if needs_redraw or int(now_sec) != last_sec:
                 self.status_mgr.display_status_header()
-                p_line(f"{Colors.BOLD}--- 5x5 SYMBOL & ODDS CONFIGURATOR: {casino_item['name'].upper()} ---{Colors.RESET}")
+                p_line(f"{Colors.BOLD}--- SYMBOL & ODDS CONFIGURATOR: {casino_item['name'].upper()} ---{Colors.RESET}")
                 p_line(f"Total Combined Weight Pool: {total_weight}")
                 p_line()
 
@@ -638,13 +628,15 @@ class ShopCasinoManager:
                     c_code = Colors.parse_color(sym.get("color", "WHITE"))
                     w = int(sym.get("weight", 10))
                     prob_pct = (w / total_weight * 100.0) if total_weight > 0 else 0.0
-                    
+                    tier = str(sym.get("tier", "Normal"))
+                    tier_tag = f" [{tier.upper()}]" if tier != "Normal" else ""
+
                     rtype = sym.get("reward_type", "Money Gain")
                     sk_target = sym.get("target_skill", "None")
                     sk_info = f" | Skill EXP: {sk_target} (+{sym.get('skill_val', 0)})" if sk_target != "None" else ""
                     r_info = f"{rtype} ({sym.get('val', 0)}){sk_info}" if rtype != "Item Win" else f"Item: {sym.get('item_name', 'Potion')}"
 
-                    line = f"{cursor}{c_code}[{sym['name']:<6}]{Colors.RESET} Wt: {w:<3} ({prob_pct:>5.1f}%) | Effect: {r_info}"
+                    line = f"{cursor}{c_code}[{sym['name']:<6}]{Colors.RESET}{Colors.GOLD}{tier_tag}{Colors.RESET} Wt: {w:<3} ({prob_pct:>5.1f}%) | Effect: {r_info}"
                     if idx == sel:
                         p_line(f"{Colors.HIGHLIGHT}{line}{Colors.RESET}")
                     else:
@@ -672,21 +664,23 @@ class ShopCasinoManager:
                 fields = [
                     {"key": "name", "label": "Symbol Name/Text", "type": "text", "val": "COIN"},
                     {"key": "color", "label": "Color (Name/#Hex)", "type": "text", "val": "CYAN"},
+                    {"key": "tier", "label": "Symbol Tier", "type": "select", "val": "Normal", "options": ["Normal", "Rare", "Jackpot"]},
                     {"key": "weight", "label": "Odds Weight (Chance)", "type": "number", "val": 10},
                     {"key": "reward_type", "label": "Effect Type", "type": "select", "val": "Money Gain", "options": ["Money Gain", "Money Loss", "HP Heal", "HP Loss", "EXP Gain", "Skill EXP Gain", "EXP Loss", "Item Win"]},
                     {"key": "val", "label": "Value / Amount", "type": "number", "val": 25.0},
                     {"key": "target_skill", "label": "Target Skill EXP", "type": "select", "val": "None", "options": skill_options},
                     {"key": "skill_val", "label": "Skill EXP Amount", "type": "number", "val": 0.0},
-                    {"key": "item_name", "label": "Item Name (If Item Win)", "type": "text", "val": "Health Potion"},
+                    {"key": "item_name", "label": "Item Reward (If Item Win)", "type": "select", "val": item_options[0], "options": item_options},
                     {"key": "SAVE", "label": "SAVE SYMBOL", "type": "button"},
                     {"key": "CANCEL", "label": "CANCEL", "type": "button"}
                 ]
-                res = self.ctx.run_menu_form("Create 5x5 Symbol", fields, self.status_mgr.display_status_header)
+                res = self.ctx.run_menu_form("Create Symbol", fields, self.status_mgr.display_status_header)
                 if res:
                     new_sym = {
                         "id": str(res["name"]).upper(),
                         "name": str(res["name"]),
                         "color": str(res["color"]),
+                        "tier": str(res.get("tier", "Normal")),
                         "weight": int(res["weight"]),
                         "reward_type": str(res["reward_type"]),
                         "val": float(res["val"]),
@@ -703,15 +697,19 @@ class ShopCasinoManager:
                 init_sk = sym.get("target_skill", "None")
                 if init_sk not in skill_options: skill_options.append(init_sk)
 
+                init_item = sym.get("item_name", item_options[0])
+                if init_item not in item_options: item_options.append(init_item)
+
                 fields = [
                     {"key": "name", "label": "Symbol Name/Text", "type": "text", "val": sym["name"]},
                     {"key": "color", "label": "Color (Name/#Hex)", "type": "text", "val": sym.get("color", "WHITE")},
+                    {"key": "tier", "label": "Symbol Tier", "type": "select", "val": sym.get("tier", "Normal"), "options": ["Normal", "Rare", "Jackpot"]},
                     {"key": "weight", "label": "Odds Weight (Chance)", "type": "number", "val": sym.get("weight", 10)},
                     {"key": "reward_type", "label": "Effect Type", "type": "select", "val": sym.get("reward_type", "Money Gain"), "options": ["Money Gain", "Money Loss", "HP Heal", "HP Loss", "EXP Gain", "Skill EXP Gain", "EXP Loss", "Item Win"]},
                     {"key": "val", "label": "Value / Amount", "type": "number", "val": sym.get("val", 10.0)},
                     {"key": "target_skill", "label": "Target Skill EXP", "type": "select", "val": init_sk, "options": skill_options},
                     {"key": "skill_val", "label": "Skill EXP Amount", "type": "number", "val": sym.get("skill_val", 0.0)},
-                    {"key": "item_name", "label": "Item Name (If Item Win)", "type": "text", "val": sym.get("item_name", "Health Potion")},
+                    {"key": "item_name", "label": "Item Reward (If Item Win)", "type": "select", "val": init_item, "options": item_options},
                     {"key": "SAVE", "label": "SAVE SYMBOL", "type": "button"},
                     {"key": "CANCEL", "label": "CANCEL", "type": "button"}
                 ]
@@ -719,6 +717,7 @@ class ShopCasinoManager:
                 if res:
                     sym["name"] = str(res["name"])
                     sym["color"] = str(res["color"])
+                    sym["tier"] = str(res.get("tier", "Normal"))
                     sym["weight"] = int(res["weight"])
                     sym["reward_type"] = str(res["reward_type"])
                     sym["val"] = float(res["val"])

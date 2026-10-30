@@ -42,12 +42,13 @@ class SettingsManager:
                 "description": "Restores 30 HP instantly.", "type": "heal_fixed", "value": 30.0
             },
             {
-                "id": 2, "name": "European Roulette", "color": "GREEN", "price": 10.0,
-                "description": "Bet on Red, Black, Even, Odd, or Single Numbers!", "type": "roulette"
+                "id": 2, "name": "Plinko Peg Drop", "color": "CYAN", "price": 10.0,
+                "description": "Drop a chip through the peg grid into outcome buckets!", "type": "plinko",
+                "symbols": self.ctx.get_default_5x5_symbols()
             },
             {
-                "id": 3, "name": "5x5 Wheel of Fortune", "color": "GOLD", "price": 15.0,
-                "description": "Spin the compact 5x5 symbol wheel for rewards!", "type": "wheel",
+                "id": 3, "name": "1x5 Wheel of Fortune", "color": "GOLD", "price": 15.0,
+                "description": "Spin the 1x5 symbol strip to hit the center pointer!", "type": "wheel",
                 "symbols": self.ctx.get_default_5x5_symbols()
             }
         ]

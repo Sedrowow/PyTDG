@@ -292,22 +292,22 @@ class GameContext:
                     t["due_datetime"] = default_due.strftime("%Y-%m-%d %H:%M")
 
         for item in self.data["shop"]:
-            if item.get("type") == "wheel":
+            if item.get("type") in ("wheel", "chests", "slotmachine"):
                 item.setdefault("symbols", self.get_default_5x5_symbols())
 
     def get_default_5x5_symbols(self) -> List[Dict[str, Any]]:
         return [
-            {"id": "777", "name": "777", "color": "GOLD", "weight": 10, "reward_type": "Money Gain", "val": 100.0, "target_skill": "None", "skill_val": 0.0, "item_name": "Health Potion", "art": DEFAULT_5x5_ARTS["SEVEN"]},
-            {"id": "STAR", "name": "STAR", "color": "YELLOW", "weight": 25, "reward_type": "EXP Gain", "val": 50.0, "target_skill": "None", "skill_val": 0.0, "item_name": "Health Potion", "art": DEFAULT_5x5_ARTS["STAR"]},
-            {"id": "GEM", "name": "GEM", "color": "PURPLE", "weight": 20, "reward_type": "Item Win", "val": 1.0, "target_skill": "None", "skill_val": 0.0, "item_name": "Health Potion", "art": DEFAULT_5x5_ARTS["GEM"]},
-            {"id": "COIN", "name": "COIN", "color": "CYAN", "weight": 30, "reward_type": "Money Gain", "val": 25.0, "target_skill": "None", "skill_val": 0.0, "item_name": "Health Potion", "art": DEFAULT_5x5_ARTS["COIN"]},
-            {"id": "SKULL", "name": "SKULL", "color": "RED", "weight": 15, "reward_type": "HP Loss", "val": 20.0, "target_skill": "None", "skill_val": 0.0, "item_name": "Health Potion", "art": DEFAULT_5x5_ARTS["SKULL"]}
+            {"id": "777", "name": "777", "color": "GOLD", "weight": 10, "tier": "Jackpot", "reward_type": "Money Gain", "val": 100.0, "target_skill": "None", "skill_val": 0.0, "item_name": "Health Potion", "art": DEFAULT_5x5_ARTS["SEVEN"]},
+            {"id": "STAR", "name": "STAR", "color": "YELLOW", "weight": 25, "tier": "Rare", "reward_type": "EXP Gain", "val": 50.0, "target_skill": "None", "skill_val": 0.0, "item_name": "Health Potion", "art": DEFAULT_5x5_ARTS["STAR"]},
+            {"id": "GEM", "name": "GEM", "color": "PURPLE", "weight": 20, "tier": "Rare", "reward_type": "Item Win", "val": 1.0, "target_skill": "None", "skill_val": 0.0, "item_name": "Health Potion", "art": DEFAULT_5x5_ARTS["GEM"]},
+            {"id": "COIN", "name": "COIN", "color": "CYAN", "weight": 30, "tier": "Normal", "reward_type": "Money Gain", "val": 25.0, "target_skill": "None", "skill_val": 0.0, "item_name": "Health Potion", "art": DEFAULT_5x5_ARTS["COIN"]},
+            {"id": "SKULL", "name": "SKULL", "color": "RED", "weight": 15, "tier": "Normal", "reward_type": "HP Loss", "val": 20.0, "target_skill": "None", "skill_val": 0.0, "item_name": "Health Potion", "art": DEFAULT_5x5_ARTS["SKULL"]}
         ]
 
     def get_registered_item_names(self) -> List[str]:
         names = [i["name"] for i in self.data["items"]]
         for s in self.data["shop"]:
-            if s.get("type") not in ("slotmachine", "roulette", "wheel") and s["name"] not in names:
+            if s.get("type") not in ("slotmachine", "chests", "wheel") and s["name"] not in names:
                 names.append(s["name"])
         for c in self.data["crafting"]:
             if c["name"] not in names:
