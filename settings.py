@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Settings & Profile Management Module.
+Settings & Profile Management Module with Interactive Navigation Profile Selection.
 """
 
 import time
@@ -42,13 +42,18 @@ class SettingsManager:
                 "description": "Restores 30 HP instantly.", "type": "heal_fixed", "value": 30.0
             },
             {
-                "id": 2, "name": "Plinko Peg Drop", "color": "CYAN", "price": 10.0,
-                "description": "Drop a chip through the peg grid into outcome buckets!", "type": "plinko",
+                "id": 2, "name": "5x3 Mega Slots", "color": "PURPLE", "price": 20.0,
+                "description": "5-Reel 3-Row slot grid with middle payline matches!", "type": "slotmachine_5x3",
                 "symbols": self.ctx.get_default_5x5_symbols()
             },
             {
-                "id": 3, "name": "1x5 Wheel of Fortune", "color": "GOLD", "price": 15.0,
-                "description": "Spin the 1x5 symbol strip to hit the center pointer!", "type": "wheel",
+                "id": 3, "name": "CS:GO Loot Wheel", "color": "GOLD", "price": 15.0,
+                "description": "Right-to-left CS:GO style ticker stream reel!", "type": "wheel",
+                "symbols": self.ctx.get_default_5x5_symbols()
+            },
+            {
+                "id": 4, "name": "Plinko Coin Drop", "color": "YELLOW", "price": 12.0,
+                "description": "Drop an animated coin down peg obstacles into prize slots!", "type": "coindrop",
                 "symbols": self.ctx.get_default_5x5_symbols()
             }
         ]
@@ -143,12 +148,22 @@ class SettingsManager:
 
                 elif sel == 1:
                     p_keys = list(self.ctx.data["profiles"].keys())
-                    p_names = [self.ctx.data["profiles"][k]["name"] for k in p_keys]
-                    print("\nAvailable Profiles: " + ", ".join(f"[{k}: {n}]" for k, n in zip(p_keys, p_names)))
-                    target = self.ctx.prompt_input("Enter Profile ID to activate: ")
-                    if target in self.ctx.data["profiles"]:
-                        self.ctx.data["active_profile_id"] = target
+                    active_id = self.ctx.data["active_profile_id"]
+                    
+                    p_opts = []
+                    for k in p_keys:
+                        p_prof = self.ctx.data["profiles"][k]
+                        active_marker = " (ACTIVE)" if k == active_id else ""
+                        p_opts.append(f"{p_prof['name']}{active_marker} - Lvl {p_prof['level']} | ${p_prof['money']:.2f} [ID: {k}]")
+                    p_opts.append("0. Cancel")
+
+                    choice = self.ctx.run_action_menu("Switch Active Profile", p_opts, self.status_mgr.display_status_header)
+                    if choice is not None and choice < len(p_keys):
+                        target_key = p_keys[choice]
+                        self.ctx.data["active_profile_id"] = target_key
                         self.ctx.save_data()
+                        print(f"\n{Colors.GREEN}Switched active profile to '{self.ctx.data['profiles'][target_key]['name']}'!{Colors.RESET}")
+                        time.sleep(1.0)
 
                 elif sel == 2:
                     new_id = f"p_{int(time.time())}"
@@ -162,16 +177,19 @@ class SettingsManager:
                     self.ctx.save_data()
 
                 elif sel == 3:
-                    if len(self.ctx.data["profiles"]) <= 1:
+                    p_keys = list(self.ctx.data["profiles"].keys())
+                    if len(p_keys) <= 1:
                         print(f"\n{Colors.RED}Cannot delete the only existing profile!{Colors.RESET}")
                         time.sleep(1.2)
                     else:
-                        target = self.ctx.prompt_input("Enter Profile ID to Delete: ")
-                        if target in self.ctx.data["profiles"]:
-                            conf = self.ctx.prompt_input(f"Confirm deletion of profile '{self.ctx.data['profiles'][target]['name']}'? (y/N): ")
+                        p_opts = [f"{self.ctx.data['profiles'][k]['name']} [ID: {k}]" for k in p_keys] + ["0. Cancel"]
+                        choice = self.ctx.run_action_menu("Delete Profile", p_opts, self.status_mgr.display_status_header)
+                        if choice is not None and choice < len(p_keys):
+                            target_key = p_keys[choice]
+                            conf = self.ctx.prompt_input(f"Confirm deletion of profile '{self.ctx.data['profiles'][target_key]['name']}'? (y/N): ")
                             if conf.lower().startswith("y"):
-                                del self.ctx.data["profiles"][target]
-                                if self.ctx.data["active_profile_id"] == target:
+                                del self.ctx.data["profiles"][target_key]
+                                if self.ctx.data["active_profile_id"] == target_key:
                                     self.ctx.data["active_profile_id"] = list(self.ctx.data["profiles"].keys())[0]
                                 self.ctx.save_data()
 
