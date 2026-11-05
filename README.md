@@ -46,7 +46,8 @@ PyTDG/
 ├── main.py          # Application entry point & main menu loop
 ├── status.py        # StatusManager: HUD rendering, bar animations, timers, HP/EXP logic
 ├── tasks.py         # TaskManager: Task creation, editing, completion, penalties, sorting
-├── shopcasino.py    # ShopCasinoManager: Shop, Roulette, Slots, 5x5 Wheel, Pixel Art Editor
+├── shop.py          # Shop: (previously in shopcasino.py      ShopCasinoManager: Shop, Roulette, Slots, 5x5 Wheel, Pixel Art Editor)
+├── casino.py        # Casino: (previously in shopcasino.py    ShopCasinoManager: Shop, Roulette, Slots, 5x5 Wheel, Pixel Art Editor)
 ├── item.py          # ItemManager: Master Item Registry, Inventory, Crafting Workshop
 ├── settings.py      # SettingsManager: Profile creation/switching, stat editor, sample data
 └── utils.py         # Core utilities: CbreakTerminal, key-reading, ANSI colors, math calculations
